@@ -1,0 +1,6 @@
+generatorName: python-fastapi
+inputSpec: openapi.yaml
+outputDir: .
+templateDir: openapi/templates
+additionalProperties:
+  sourceFolder: .

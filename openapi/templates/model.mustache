@@ -1,0 +1,21 @@
+# coding: utf-8
+
+{{>partial_header}}
+
+from typing import Optional
+from sqlmodel import SQLModel, Field
+
+{{#models}}
+{{#model}}
+{{#isEnum}}
+{{>model_enum}}
+{{/isEnum}}
+{{^isEnum}}
+class {{classname}}(SQLModel, table=True):
+    {{#description}}"""{{description}}"""{{/description}}
+    {{#vars}}
+    {{name}}: {{^required}}Optional[{{/required}}{{datatype}}{{^required}}]{{/required}} = Field({{#defaultValue}}default={{defaultValue}}, {{/defaultValue}}{{#isPrimaryKey}}primary_key=True{{/isPrimaryKey}})
+    {{/vars}}
+{{/isEnum}}
+{{/model}}
+{{/models}}
