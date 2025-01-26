@@ -47,4 +47,6 @@ openapi_server/security_api.py
 tests/conftest.py
 tests/test_document_api.py
 
+**/main.py
+
 setup.cfg

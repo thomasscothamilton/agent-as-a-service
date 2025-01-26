@@ -14,51 +14,54 @@
 from fastapi import FastAPI, HTTPException
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import RoundRobinGroupChat
-
-help(RoundRobinGroupChat)
 from autogen_agentchat.conditions import TextMentionTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
-from openapi_server.apis.chat_api import router as ChatApiRouter
-from openapi_server.impl.chat_impl import ChatImpl
+from sqlmodel import SQLModel
+
+
+from openapi_server.database import engine
+from openapi_server.apis.teams_api import router as TeamsApiRouter
+from openapi_server.apis.agents_api import router as AgentsApiRouter
+from openapi_server.apis.tasks_api import router as TasksApiRouter
 import os
 
 # Initialize OpenAI Client
-try:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable is not set.")
-    model_client = OpenAIChatCompletionClient(model="gpt-4", api_key=api_key)
-except Exception as e:
-    model_client = None  # Gracefully handle the missing API key
-    print(f"Warning: OpenAI client could not be initialized. Error: {e}")
-
-# Define Agents (only if the model client was initialized)
-if model_client:
-    primary_agent = AssistantAgent(
-        name="primary",
-        model_client=model_client,
-        system_message="You are a helpful AI assistant.",
-    )
-
-    critic_agent = AssistantAgent(
-        name="critic",
-        model_client=model_client,
-        system_message="Provide constructive feedback. Respond with 'APPROVE' when your feedback is addressed.",
-    )
-
-    # Define Termination Condition
-    termination_condition = TextMentionTermination("APPROVE")
-
-    # Create Team
-    team = RoundRobinGroupChat(
-        [
-            primary_agent,
-            critic_agent
-        ],
-        termination_condition=termination_condition,
-    )
-else:
-    team = None
+# try:
+#     api_key = os.getenv("OPENAI_API_KEY")
+#     if not api_key:
+#         raise ValueError("OPENAI_API_KEY environment variable is not set.")
+#     model_client = OpenAIChatCompletionClient(model="gpt-4", api_key=api_key)
+# except Exception as e:
+#     model_client = None  # Gracefully handle the missing API key
+#     print(f"Warning: OpenAI client could not be initialized. Error: {e}")
+#
+# # Define Agents (only if the model client was initialized)
+# if model_client:
+#     primary_agent = AssistantAgent(
+#         name="primary",
+#         model_client=model_client,
+#         system_message="You are a helpful AI assistant.",
+#     )
+#
+#     critic_agent = AssistantAgent(
+#         name="critic",
+#         model_client=model_client,
+#         system_message="Provide constructive feedback. Respond with 'APPROVE' when your feedback is addressed.",
+#     )
+#
+#     # Define Termination Condition
+#     termination_condition = TextMentionTermination("APPROVE")
+#
+#     # Create Team
+#     team = RoundRobinGroupChat(
+#         [
+#             primary_agent,
+#             critic_agent
+#         ],
+#         termination_condition=termination_condition,
+#     )
+# else:
+#     team = None
 
 # Initialize FastAPI App
 app = FastAPI(
@@ -68,12 +71,12 @@ app = FastAPI(
 )
 
 # Pass the team to the ChatImpl class (if initialized)
-if team:
-    ChatImpl.team = team
-else:
-    # Define a mock ChatImpl or raise a warning if used
-    ChatImpl.team = None
-    print("Warning: Team is not initialized. API endpoints dependent on OpenAI may not work.")
+# if team:
+#     ChatImpl.team = team
+# else:
+#     # Define a mock ChatImpl or raise a warning if used
+#     ChatImpl.team = None
+#     print("Warning: Team is not initialized. API endpoints dependent on OpenAI may not work.")
 
 
 @app.get("/health")
@@ -81,8 +84,8 @@ def health_check():
     """
     Health check endpoint to verify that the service is running.
     """
-    if not model_client:
-        return {"status": "warning", "message": "OpenAI client is not initialized. Check your API key."}
+    # if not model_client:
+    #     return {"status": "warning", "message": "OpenAI client is not initialized. Check your API key."}
     return {"status": "ok", "message": "Service is running."}
 
 
@@ -91,13 +94,16 @@ def chat_warning():
     """
     Endpoint to warn users about uninitialized OpenAI dependencies.
     """
-    if not team:
-        raise HTTPException(
-            status_code=500,
-            detail="OpenAI team is not initialized. Ensure OPENAI_API_KEY is properly configured."
-        )
+    # if not team:
+    #     raise HTTPException(
+    #         status_code=500,
+    #         detail="OpenAI team is not initialized. Ensure OPENAI_API_KEY is properly configured."
+    #     )
     return {"message": "Team is ready to process requests."}
 
+SQLModel.metadata.create_all(engine)
 
 # Include API router
-app.include_router(ChatApiRouter)
+app.include_router(TeamsApiRouter)
+app.include_router(AgentsApiRouter)
+app.include_router(TasksApiRouter)

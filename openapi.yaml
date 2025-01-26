@@ -1,43 +1,1055 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
-  title: Agent as a service API
+  description: "API for managing agents, teams, and tasks in an AutoGen system."
+  title: AutoGen Framework API
   version: 1.0.0
 servers:
-- description: Local server
-  url: http://localhost:8080
+- description: Production environment
+  url: https://api.autogenframework.com/v1
+- description: Local development environment
+  url: http://localhost:3000
 paths:
-  /chat:
+  /agents:
     get:
-      operationId: chat
+      description: Retrieves a list of all agents available in the system.
+      operationId: listAgents
+      parameters:
+      - description: Filter agents by status.
+        explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          enum:
+          - active
+          - inactive
+          type: string
+        style: form
+      - description: Filter agents by role.
+        explode: true
+        in: query
+        name: role
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Maximum number of agents to return.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          minimum: 1
+          type: integer
+        style: form
+      - description: Pagination offset.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Chat'
-          description: A Chat response
-      summary: A chat response
+                items:
+                  $ref: '#/components/schemas/Agent'
+                type: array
+          description: A list of agents
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: List all agents
       tags:
-      - chat
-components:
-  schemas:
-    Chat:
-      example:
-        id: id
-        title: title
-        content: content
-      properties:
-        id:
-          type: string
-        title:
-          title: title
-          type: string
+      - Agents
+    post:
+      description: Adds a new agent to the system.
+      operationId: createAgent
+      requestBody:
         content:
-          title: content
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentInput'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+          description: Agent created successfully
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Create a new agent
+      tags:
+      - Agents
+  /agents/{agent_id}:
+    delete:
+      description: Removes an agent from the system by its ID.
+      operationId: deleteAgent
+      parameters:
+      - description: The ID of the agent
+        explode: false
+        in: path
+        name: agent_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Agent deleted successfully
+        "404":
+          description: Agent not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Delete an agent
+      tags:
+      - Agents
+    get:
+      description: Retrieves detailed information about an agent by its ID.
+      operationId: getAgentById
+      parameters:
+      - description: The ID of the agent
+        explode: false
+        in: path
+        name: agent_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+          description: Agent details
+        "404":
+          description: Agent not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Get details of a specific agent
+      tags:
+      - Agents
+    patch:
+      description: Allows partial updates to an existing agent's information.
+      operationId: updateAgent
+      parameters:
+      - description: The ID of the agent
+        explode: false
+        in: path
+        name: agent_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentUpdate'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+          description: Agent updated successfully
+        "404":
+          description: Agent not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Update an existing agent
+      tags:
+      - Agents
+  /teams:
+    get:
+      description: Retrieves a list of all teams in the system.
+      operationId: listTeams
+      parameters:
+      - description: Maximum number of teams to return.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          minimum: 1
+          type: integer
+        style: form
+      - description: Pagination offset.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Team'
+                type: array
+          description: A list of teams
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: List all teams
+      tags:
+      - Teams
+    post:
+      description: Adds a new team to the system.
+      operationId: createTeam
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamInput'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+          description: Team created successfully
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Create a new team
+      tags:
+      - Teams
+  /teams/{team_id}:
+    delete:
+      description: Removes a team from the system by its ID.
+      operationId: deleteTeam
+      parameters:
+      - description: The ID of the team
+        explode: false
+        in: path
+        name: team_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Team deleted successfully
+        "404":
+          description: Team not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Delete an existing team
+      tags:
+      - Teams
+    get:
+      description: Returns details about a particular team by its ID.
+      operationId: getTeamById
+      parameters:
+      - description: The ID of the team
+        explode: false
+        in: path
+        name: team_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+          description: Team details
+        "404":
+          description: Team not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Retrieve a specific team
+      tags:
+      - Teams
+    patch:
+      description: Allows partial updates to an existing team’s information.
+      operationId: updateTeam
+      parameters:
+      - description: The ID of the team
+        explode: false
+        in: path
+        name: team_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpdate'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+          description: Team updated successfully
+        "404":
+          description: Team not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Update an existing team
+      tags:
+      - Teams
+  /tasks:
+    get:
+      description: Retrieves a list of all tasks in the system.
+      operationId: listTasks
+      parameters:
+      - description: Filter tasks by status.
+        explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          enum:
+          - pending
+          - in-progress
+          - completed
+          type: string
+        style: form
+      - description: Filter tasks by priority.
+        explode: true
+        in: query
+        name: priority
+        required: false
+        schema:
+          enum:
+          - low
+          - medium
+          - high
+          type: string
+        style: form
+      - description: Maximum number of tasks to return.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          minimum: 1
+          type: integer
+        style: form
+      - description: Pagination offset.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Task'
+                type: array
+          description: A list of tasks
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: List all tasks
+      tags:
+      - Tasks
+    post:
+      description: Adds a new task to the system.
+      operationId: createTask
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: Task created successfully
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Create a new task
+      tags:
+      - Tasks
+  /tasks/{task_id}:
+    delete:
+      description: Removes a task from the system by its ID.
+      operationId: deleteTask
+      parameters:
+      - description: The ID of the task
+        explode: false
+        in: path
+        name: task_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Task deleted successfully
+        "404":
+          description: Task not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Delete an existing task
+      tags:
+      - Tasks
+    get:
+      description: Returns details about a particular task by its ID.
+      operationId: getTaskById
+      parameters:
+      - description: The ID of the task
+        explode: false
+        in: path
+        name: task_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: Task details
+        "404":
+          description: Task not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Retrieve a specific task
+      tags:
+      - Tasks
+    patch:
+      description: Allows partial updates to an existing task’s information.
+      operationId: updateTask
+      parameters:
+      - description: The ID of the task
+        explode: false
+        in: path
+        name: task_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: Task updated successfully
+        "404":
+          description: Task not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Update an existing task
+      tags:
+      - Tasks
+  /tasks/{task_id}/assign-agent:
+    post:
+      description: "Associates an agent with a specific task, including the agent's\
+        \ role in that task."
+      operationId: assignAgentToTask
+      parameters:
+      - description: The ID of the task
+        explode: false
+        in: path
+        name: task_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAgentAssignmentInput'
+        required: true
+      responses:
+        "200":
+          description: Agent assigned to task successfully
+        "404":
+          description: Task or agent not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Assign an agent to a task
+      tags:
+      - Tasks
+  /tasks/{task_id}/agents:
+    get:
+      description: Retrieves a list of agents (and their roles) assigned to a particular
+        task.
+      operationId: listAgentsForTask
+      parameters:
+      - description: The ID of the task
+        explode: false
+        in: path
+        name: task_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TaskAgentAssignment'
+                type: array
+          description: A list of agent assignments
+        "404":
+          description: Task not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: List agents assigned to a specific task
+      tags:
+      - Tasks
+    post:
+      description: An alternative approach to assigning an agent to a task using a
+        nested subresource.
+      operationId: addAgentToTask
+      parameters:
+      - description: The ID of the task
+        explode: false
+        in: path
+        name: task_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAgentAssignmentInput'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAgentAssignment'
+          description: Agent added to task successfully
+        "404":
+          description: Task or agent not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Add an agent to a task (nested subresource style)
+      tags:
+      - Tasks
+  /tasks/{task_id}/agents/{agent_id}:
+    delete:
+      description: Deletes the agent-to-task assignment for a specified task and agent.
+      operationId: removeAgentFromTask
+      parameters:
+      - description: The ID of the task
+        explode: false
+        in: path
+        name: task_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: The ID of the agent
+        explode: false
+        in: path
+        name: agent_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Agent removed from the task successfully
+        "404":
+          description: Task or agent not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listAgents_default_response'
+          description: An error response
+      summary: Remove an agent from a task
+      tags:
+      - Tasks
+components:
+  parameters:
+    agentId:
+      description: The ID of the agent
+      explode: false
+      in: path
+      name: agent_id
+      required: true
+      schema:
+        type: integer
+      style: simple
+    teamId:
+      description: The ID of the team
+      explode: false
+      in: path
+      name: team_id
+      required: true
+      schema:
+        type: integer
+      style: simple
+    taskId:
+      description: The ID of the task
+      explode: false
+      in: path
+      name: task_id
+      required: true
+      schema:
+        type: integer
+      style: simple
+  responses:
+    ErrorResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/listAgents_default_response'
+      description: An error response
+  schemas:
+    Agent:
+      example:
+        system_message: system_message
+        role: role
+        agent_id: 0
+        name: name
+        model_type: model_type
+        created_at: 2000-01-23T04:56:07.000+00:00
+        status: active
+      properties:
+        agent_id:
+          description: Unique identifier of the agent
+          title: agent_id
+          type: integer
+        name:
+          description: The name of the agent
+          title: name
+          type: string
+        role:
+          description: "The agent's primary/global role (e.g., 'developer')"
+          title: role
+          type: string
+        status:
+          description: The status of the agent
+          enum:
+          - active
+          - inactive
+          title: status
+          type: string
+        model_type:
+          description: The underlying model used by this agent
+          title: model_type
+          type: string
+        system_message:
+          description: Additional system message or notes about the agent
+          title: system_message
+          type: string
+        created_at:
+          description: Timestamp when the agent was created
+          format: date-time
+          title: created_at
+          type: string
+      title: Agent
+      type: object
+    AgentInput:
+      example:
+        system_message: system_message
+        role: role
+        name: name
+        model_type: model_type
+      properties:
+        name:
+          description: The name of the agent
+          title: name
+          type: string
+        role:
+          description: The role or type of the agent
+          title: role
+          type: string
+        model_type:
+          description: The underlying model used by this agent
+          title: model_type
+          type: string
+        system_message:
+          description: Additional system message or notes about the agent
+          title: system_message
           type: string
       required:
-      - content
-      - title
-      title: Document
+      - model_type
+      - name
+      - role
+      title: AgentInput
       type: object
-  securitySchemes: {}
+    AgentUpdate:
+      description: Schema for partially updating an agent
+      example:
+        system_message: system_message
+        role: role
+        name: name
+        model_type: model_type
+        status: active
+      properties:
+        name:
+          title: name
+          type: string
+        role:
+          title: role
+          type: string
+        model_type:
+          title: model_type
+          type: string
+        system_message:
+          title: system_message
+          type: string
+        status:
+          enum:
+          - active
+          - inactive
+          title: status
+          type: string
+      title: AgentUpdate
+      type: object
+    Team:
+      example:
+        name: name
+        description: description
+        created_at: 2000-01-23T04:56:07.000+00:00
+        team_id: 0
+      properties:
+        team_id:
+          description: Unique identifier of the team
+          title: team_id
+          type: integer
+        name:
+          description: The name of the team
+          title: name
+          type: string
+        description:
+          description: A short description of the team
+          title: description
+          type: string
+        created_at:
+          description: Timestamp when the team was created
+          format: date-time
+          title: created_at
+          type: string
+      title: Team
+      type: object
+    TeamInput:
+      example:
+        name: name
+        description: description
+      properties:
+        name:
+          description: The name of the team
+          title: name
+          type: string
+        description:
+          description: A short description of the team
+          title: description
+          type: string
+      required:
+      - name
+      title: TeamInput
+      type: object
+    TeamUpdate:
+      description: Schema for partially updating a team
+      example:
+        name: name
+        description: description
+      properties:
+        name:
+          title: name
+          type: string
+        description:
+          title: description
+          type: string
+      title: TeamUpdate
+      type: object
+    Task:
+      example:
+        assigned_team_id: 6
+        name: name
+        description: description
+        created_at: 2000-01-23T04:56:07.000+00:00
+        task_id: 0
+        priority: low
+        status: pending
+      properties:
+        task_id:
+          description: Unique identifier of the task
+          title: task_id
+          type: integer
+        name:
+          description: The name of the task
+          title: name
+          type: string
+        description:
+          description: A short description of the task
+          title: description
+          type: string
+        status:
+          description: The current status of the task
+          enum:
+          - pending
+          - in-progress
+          - completed
+          title: status
+          type: string
+        assigned_team_id:
+          description: The ID of the team assigned to the task
+          title: assigned_team_id
+          type: integer
+        priority:
+          description: Priority level for the task
+          enum:
+          - low
+          - medium
+          - high
+          title: priority
+          type: string
+        created_at:
+          description: Timestamp when the task was created
+          format: date-time
+          title: created_at
+          type: string
+      title: Task
+      type: object
+    TaskInput:
+      example:
+        assigned_team_id: 0
+        name: name
+        description: description
+        priority: low
+      properties:
+        name:
+          description: The name of the task
+          title: name
+          type: string
+        description:
+          description: A short description of the task
+          title: description
+          type: string
+        assigned_team_id:
+          description: The ID of the team assigned to this task
+          title: assigned_team_id
+          type: integer
+        priority:
+          description: Priority level of the task
+          enum:
+          - low
+          - medium
+          - high
+          title: priority
+          type: string
+      required:
+      - assigned_team_id
+      - name
+      title: TaskInput
+      type: object
+    TaskUpdate:
+      description: Schema for partially updating a task
+      example:
+        assigned_team_id: 0
+        name: name
+        description: description
+        priority: low
+        status: pending
+      properties:
+        name:
+          title: name
+          type: string
+        description:
+          title: description
+          type: string
+        status:
+          enum:
+          - pending
+          - in-progress
+          - completed
+          title: status
+          type: string
+        assigned_team_id:
+          title: assigned_team_id
+          type: integer
+        priority:
+          enum:
+          - low
+          - medium
+          - high
+          title: priority
+          type: string
+      title: TaskUpdate
+      type: object
+    TaskAgentAssignmentInput:
+      example:
+        role_in_task: role_in_task
+        agent_id: 0
+      properties:
+        agent_id:
+          description: The ID of the agent to be assigned
+          title: agent_id
+          type: integer
+        role_in_task:
+          description: The role of the agent in this particular task
+          title: role_in_task
+          type: string
+      required:
+      - agent_id
+      - role_in_task
+      title: TaskAgentAssignmentInput
+      type: object
+    TaskAgentAssignment:
+      example:
+        role_in_task: role_in_task
+        agent_id: 6
+        assigned_at: 2000-01-23T04:56:07.000+00:00
+        task_id: 0
+      properties:
+        task_id:
+          description: The ID of the task
+          title: task_id
+          type: integer
+        agent_id:
+          description: The ID of the assigned agent
+          title: agent_id
+          type: integer
+        role_in_task:
+          description: The agent's role within this task
+          title: role_in_task
+          type: string
+        assigned_at:
+          description: Timestamp when the agent was assigned
+          format: date-time
+          title: assigned_at
+          type: string
+      title: TaskAgentAssignment
+      type: object
+    listAgents_default_response:
+      example:
+        code: code
+        details: "{}"
+        message: message
+      properties:
+        code:
+          description: "A unique error code (e.g., \"AGENT_NOT_FOUND\")"
+          title: code
+          type: string
+        message:
+          description: A human-readable error message
+          title: message
+          type: string
+        details:
+          description: Additional context or fields related to the error
+          title: details
+          type: object
+      required:
+      - code
+      - message
+      title: listAgents_default_response
+      type: object
